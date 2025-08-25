@@ -111,7 +111,8 @@ while True:
         })
     count=count+1
     if count%200==0:
-        with open("Arogga_Medicine_Data_{count}.json", "w", encoding="utf-8") as m:
+        print("Done")
+        with open(f"Arogga_Medicine_Data_{count}.json", "w", encoding="utf-8") as m:
             json.dump(med_list, m, indent=4, ensure_ascii=False)
 
 
