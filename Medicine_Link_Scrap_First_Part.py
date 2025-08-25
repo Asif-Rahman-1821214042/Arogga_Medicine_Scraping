@@ -23,6 +23,8 @@ chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--disable-infobars")
 chrome_options.add_argument("--start-maximized")
 
+# chrome_options.add_argument("--headless")
+
 driver = webdriver.Chrome(options=chrome_options,service=service)  # Make sure chromedriver is in PATH
 
 count=1

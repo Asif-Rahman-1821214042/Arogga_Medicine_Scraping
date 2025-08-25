@@ -1,4 +1,4 @@
-#!/home/ratul/workplace/Scraping_Work/Arogga_Website_Medicine_Scraper/venv/bin/python3
+#!/mnt/SSD1TB/workspace/ratul/Arogga_Med_Scrap/Arogga_Medicine_Scraping/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
