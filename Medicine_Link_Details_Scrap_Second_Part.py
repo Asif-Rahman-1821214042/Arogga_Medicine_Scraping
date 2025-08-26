@@ -63,7 +63,7 @@ df=pd.read_csv('JSON_output_CSV.csv')
 for iLink in df['Med Link']:
     # Open the webpage
     driver.get(iLink)
-    time.sleep(5)
+    time.sleep(2)
 
     # Company Extract
     try:
@@ -98,9 +98,11 @@ for iLink in df['Med Link']:
         pass
 
     #click all see more
+    time.sleep(1)
     button_len = driver.find_elements(By.XPATH, "//b[contains(text(), 'Show more')]")
-    for i in range(0,len(button_len)):
+    for i in range(0,len(button_len)+1):
         try:
+            time.sleep(1)
             button = driver.find_element(By.XPATH, "//b[contains(text(), 'Show more')]")
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
             actions.move_to_element(button).click().perform()
