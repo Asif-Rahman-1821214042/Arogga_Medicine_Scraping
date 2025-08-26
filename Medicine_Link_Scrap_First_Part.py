@@ -2,120 +2,122 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-import time,json
+from selenium.common.exceptions import NoSuchElementException
+import time, json
+import pandas as pd
+
+# === Load Category CSV ===
+df = pd.read_csv('catagory_condom.csv')
+
 # === Setup Chrome Options ===
 chrome_options = Options()
-
-# Set up WebDriver (example with Chrome)
-service=Service("/usr/bin/chromedriver")
-
-# Disable popups, ads, and notifications
-prefs = {
-    "profile.default_content_setting_values.notifications": 2,  # Block notifications
-    "profile.default_content_setting_values.popups": 0,         # Disable popups
-    "profile.default_content_setting_values.ads": 2,            # Block ads
-    "profile.managed_default_content_settings.javascript": 1    # Allow JS if needed
-}
-chrome_options.add_experimental_option("prefs", prefs)
+chrome_options.add_experimental_option("prefs", {
+    "profile.default_content_setting_values.notifications": 2,
+    "profile.default_content_setting_values.popups": 0,
+    "profile.default_content_setting_values.ads": 2,
+    "profile.managed_default_content_settings.javascript": 1
+})
 chrome_options.add_argument("--disable-popup-blocking")
 chrome_options.add_argument("--disable-notifications")
 chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--disable-infobars")
 chrome_options.add_argument("--start-maximized")
+# chrome_options.add_argument("--headless")  # Uncomment for headless operation
 
-# chrome_options.add_argument("--headless")
+# === WebDriver Setup ===
+service = Service("/usr/bin/chromedriver")
+driver = webdriver.Chrome(options=chrome_options, service=service)
 
-driver = webdriver.Chrome(options=chrome_options,service=service)  # Make sure chromedriver is in PATH
+# === XPATH / TAG Constants ===
+PRODUCT_CARD_XPATH = "//*[@class='col-md-2 col-sm-3 mb-10']"
+PRODUCT_IMG_TAG = "img"
+PRODUCT_LINK_TAG = "a"
+MED_NAME_XPATH = ".//*[contains(@class,'product-card_product_title')]/a/div"
+FIRST_PRICE_XPATH = ".//div[contains(@class,'product-card_price')]/del"
+# SECOND_PRICE_TAG = "p"
+SECOND_PRICE_TAG = ".//p[contains(@class,'product-card_price')]"
 
-count=1
-med_list=[]
+med_list = []
+total_count = 1
 
-product_cardX="//*[@class='col-md-2 col-sm-3 mb-10']"
-product_imgT="img"
-Product_LinkT="a"
-Med_NameX=".//*[contains(@class,'product-card_product_title')]/a/div"
-First_priceX=".//div[contains(@class,'product-card_price')]/del"
-Second_priceT="p"
+# === Start Scraping Loop ===
+for cLink in df['Catagory_Link']:
+    driver.get(cLink)
+    time.sleep(15)  # Wait for full page load
 
+    count = 1
+    load_track = 1
 
+    while True:
+        try:
+            product_element = driver.find_element(By.XPATH, f"{PRODUCT_CARD_XPATH}[{count}]")
+        except NoSuchElementException:
+            break
 
-# Open the webpage
-driver.get("https://www.arogga.com/category/medicine/6322/medicine")
-time.sleep(10)
-meds=driver.find_elements(By.XPATH,product_cardX)
-print(len(meds))
+        # Scroll into view
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", product_element)
+        time.sleep(0.5)
 
-while True:
-    try:
-        i=driver.find_element(By.XPATH,f"//*[@class='col-md-2 col-sm-3 mb-10'][{count}]")
-    except:
-        break
-    
-    #scroll to specific element
-    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", i)
-    
-    try:
-        Med_Item=i.find_element(By.TAG_NAME,product_imgT)
-    except:
-        Med_Item=""
+        # Load more elements when needed
+        if count == load_track:
+            for _ in range(2):
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(6)
+            load_track += 200
 
-    try:
-        Med_Name=i.find_element(By.XPATH,Med_NameX).text
-    except:
-        Med_Name=""
+        try:
+            img_elem = product_element.find_element(By.TAG_NAME, PRODUCT_IMG_TAG)
+            brand_name = img_elem.get_attribute("alt")
+            med_img = img_elem.get_attribute("src")
+        except NoSuchElementException:
+            brand_name = ""
+            med_img = ""
 
-    try:
-        Brand_Name=Med_Item.get_attribute("alt")
-    except:
-        Brand_Name=""
+        try:
+            med_name = product_element.find_element(By.XPATH, MED_NAME_XPATH).text
+        except NoSuchElementException:
+            med_name = ""
 
-    try:
-        Med_IMG=Med_Item.get_attribute("src")
-    except:
-        Med_IMG=""
+        try:
+            med_anchor = product_element.find_element(By.TAG_NAME, PRODUCT_LINK_TAG).get_attribute("href")
+        except NoSuchElementException:
+            med_anchor = ""
 
-    try:
-        Med_Anchor=i.find_element(By.TAG_NAME,Product_LinkT).get_attribute("href")
-    except:
-        Med_Anchor=""
-    
-    try:
-        Med_Prv_Price=i.find_element(By.XPATH,First_priceX).text
-    except:
-        Med_Prv_Price=""
+        try:
+            med_prev_price = product_element.find_element(By.XPATH, FIRST_PRICE_XPATH).text
+        except NoSuchElementException:
+            med_prev_price = ""
 
-    try:
-        Med_Curr_Price=i.find_element(By.TAG_NAME,Second_priceT).text
-    except:
-        Med_Curr_Price=""
-    
-    med_list.append(
-        {
-        "Count":count,
-        "Medicine Name":Med_Name,
-        "Brand Name": Brand_Name,
-        "Med IMG":Med_IMG,
-        "Med Link":Med_Anchor,
-        "Previous Price,":Med_Prv_Price,
-        "Current Price,":Med_Curr_Price
+        try:
+            # med_curr_price = product_element.find_element(By.TAG_NAME, SECOND_PRICE_TAG).text
+            med_curr_price = product_element.find_element(By.XPATH, SECOND_PRICE_TAG).text
+        except NoSuchElementException:
+            med_curr_price = ""
+
+        med_info = {
+            "Count": total_count,
+            "Medicine Name": med_name,
+            "Brand Name": brand_name,
+            "Med IMG": med_img,
+            "Med Link": med_anchor,
+            "Previous Price": med_prev_price,
+            "Current Price": med_curr_price
         }
-        )
-    print({
-        "Count":count,
-        "Medicine Name":Med_Name,
-        "Brand Name": Brand_Name,
-        "Med IMG":Med_IMG,
-        "Med Link":Med_Anchor,
-        "Previous Price,":Med_Prv_Price,
-        "Current Price,":Med_Curr_Price
-        })
-    count=count+1
-    if count%200==0:
-        print("Done")
-        with open(f"Arogga_Medicine_Data_{count}.json", "w", encoding="utf-8") as m:
-            json.dump(med_list, m, indent=4, ensure_ascii=False)
+        med_list.append(med_info)
+        print(med_info)
 
+        count += 1
+        total_count += 1
 
+        # Save checkpoint every 200 products
+        if total_count % 200 == 0:
+            print(f"Saving checkpoint at {total_count}...")
+            with open(f"Arogga_Medicine_Data_{total_count}.json", "w", encoding="utf-8") as f:
+                json.dump(med_list, f, indent=4, ensure_ascii=False)
 
-with open("Arogga_Medicine_Data_Full_Dataset.json", "w", encoding="utf-8") as m:
-    json.dump(med_list, m, indent=4, ensure_ascii=False)
+# === Save Full Dataset ===
+with open("Arogga_Medicine_Data_Full_Dataset.json", "w", encoding="utf-8") as f:
+    json.dump(med_list, f, indent=4, ensure_ascii=False)
+
+# === Close Driver ===
+driver.quit()
