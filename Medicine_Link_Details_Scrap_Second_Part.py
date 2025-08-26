@@ -98,13 +98,13 @@ for iLink in df['Med Link']:
         pass
 
     #click all see more
-    time.sleep(1)
+    # time.sleep(1)
     button_len = driver.find_elements(By.XPATH, "//b[contains(text(), 'Show more')]")
     for i in range(0,len(button_len)+1):
         try:
-            time.sleep(1)
             button = driver.find_element(By.XPATH, "//b[contains(text(), 'Show more')]")
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+            time.sleep(1)
             actions.move_to_element(button).click().perform()
         except:
             pass
@@ -117,7 +117,7 @@ for iLink in df['Med Link']:
         OverviewsDef=driver.find_elements(By.XPATH,OverviewsDefX)
         for H,D in zip(OverviewsHead,OverviewsDef):
             # Mouse Option Click
-            time.sleep(2)
+            # time.sleep(1)
             # Overview Text Extraction
             Title=H.text
             Def=D.text
@@ -173,7 +173,7 @@ for iLink in df['Med Link']:
     if count%200==0:
         print("Done")
         with open(f"Arogga_Medicine_Details_{count}.json", "w", encoding="utf-8") as m:
-            json.dump(med_list, m, indent=4, ensure_ascii=False)
+            json.dump(Med_Link_Details_List, m, indent=4, ensure_ascii=False)
 
 
 with open("Arogga_Medicine_Detail_Data.json", "w", encoding="utf-8") as m:
