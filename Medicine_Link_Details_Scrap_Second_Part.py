@@ -28,6 +28,9 @@ chrome_options.add_argument("--start-maximized")
 # chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options,service=service)  # Make sure chromedriver is in PATH
 
+# page loadout time
+driver.set_page_load_timeout(40) 
+
 # Move mouse to the button and click
 actions = ActionChains(driver)
 
@@ -62,8 +65,12 @@ df=pd.read_csv('JSON_output_CSV.csv')
 
 for iLink in df['Med Link']:
     # Open the webpage
-    driver.get(iLink)
-    time.sleep(2)
+    try:
+        driver.get(iLink)
+        time.sleep(2)
+    except:
+        print("Page load timed out. Stopping load.")
+        driver.execute_script("window.stop();") 
 
     # Company Extract
     try:
