@@ -16,7 +16,8 @@ prefs = {
     "profile.default_content_setting_values.notifications": 2,  # Block notifications
     "profile.default_content_setting_values.popups": 0,         # Disable popups
     "profile.default_content_setting_values.ads": 2,            # Block ads
-    "profile.managed_default_content_settings.javascript": 1    # Allow JS if needed
+    "profile.managed_default_content_settings.javascript": 1,   # Allow JS if needed
+    "profile.managed_default_content_settings.images": 2        # Off Image Loading
 }
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--disable-popup-blocking")
@@ -37,6 +38,10 @@ actions = ActionChains(driver)
 #Main Storage
 count=1
 Med_Link_Details_List=[]
+
+#Error Link Storage
+Error_Scraped_Med_Link_Details_List=[]
+
 
 # Meta Data
 Company_NameX="//div[contains(@class,'product_product_info__5eX6G')]//div[contains(@class,'d-flex items-center hover-text-primary justify-space-between gap-10 w-full')]//div[contains(@class,'text-primary')]"
@@ -70,7 +75,9 @@ for iLink in df['Med Link']:
         time.sleep(2)
     except:
         print("Page load timed out. Stopping load.")
-        driver.execute_script("window.stop();") 
+        driver.execute_script("window.stop();")
+        Error_Scraped_Med_Link_Details_List.append(iLink)
+        continue
 
     # Company Extract
     try:
@@ -186,4 +193,7 @@ for iLink in df['Med Link']:
 with open("Arogga_Medicine_Detail_Data.json", "w", encoding="utf-8") as m:
     json.dump(Med_Link_Details_List, m, indent=4, ensure_ascii=False)
 
+
+with open("Error_Arogga_Medicine_Link.json", "w", encoding="utf-8") as e:
+    json.dump(Error_Scraped_Med_Link_Details_List, e, indent=4, ensure_ascii=False)
 
